@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import type { SelectChangeEvent } from '@mui/material/Select'; // Importación type-only
 
 export default function SelectorUI() {
   const [cityInput, setCityInput] = useState('');

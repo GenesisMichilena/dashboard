@@ -20,10 +20,15 @@ import {
 import { HeaderUI } from './components/HeaderUI';
 import { AlertUI } from './components/AlertUI';
 import SelectorUI from './components/SelectorUI';
+import IndicatorUI from './components/IndicatorUI';
+import useFetchData from './hooks/useFetchData';
 
 function App() {
   const [selectedCity, setSelectedCity] = useState('guayaquil');
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Usar el custom hook para obtener datos de la API
+  const weatherDataAPI = useFetchData();
 
   const weatherData = {
     guayaquil: { temp: 32, humidity: 75, wind: 12, condition: 'Soleado' },
@@ -82,9 +87,7 @@ function App() {
               </Tooltip>
             </Box>
             <AlertUI key={refreshKey} config={{ 
-              description: "No se preveen lluvias para las próximas 24 horas", 
-              severity: "success",
-              variant: "filled"
+              description: "No se preveen lluvias para las próximas 24 horas"
             }} />
           </Paper>
         </Grid2>
@@ -107,7 +110,7 @@ function App() {
           </Paper>
         </Grid2>
 
-        {/* Indicadores Principales */}
+        {/* Indicadores Principales desde API */}
         <Grid2 size={{ xs: 12, md: 8 }}>
           <Paper elevation={3} sx={{ 
             p: 3, 
@@ -115,86 +118,53 @@ function App() {
             bgcolor: '#fff'
           }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: 'bold', color: '#2c3e50' }}>
-              Indicadores Climáticos
+              Indicadores Climáticos en Tiempo Real
             </Typography>
-            <Grid2 container spacing={3}>
-              {/* Temperatura */}
-              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{ bgcolor: '#fff', borderRadius: 2 }}>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontSize: 24, color: '#e74c3c', mb: 1 }}>🌡️</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                      {currentData.temp}°C
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Temperatura
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={(currentData.temp / 40) * 100} 
-                      sx={{ mt: 2 }}
-                      color="error"
-                    />
-                  </CardContent>
-                </Card>
-              </Grid2>
+            
+            {/* Mostrar loading o datos */}
+            {!weatherDataAPI ? (
+              <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
+                Cargando datos del clima...
+              </Typography>
+            ) : (
+              <Grid2 container spacing={3}>
+                {/* Temperatura (2m) */}
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <IndicatorUI 
+                    title="Temperatura (2m)" 
+                    description={weatherDataAPI.current.temperature_2m.toFixed(1)}
+                    unit={weatherDataAPI.current_units.temperature_2m}
+                  />
+                </Grid2>
 
-              {/* Humedad */}
-              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{ bgcolor: '#fff', borderRadius: 2 }}>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontSize: 24, color: '#3498db', mb: 1 }}>💧</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                      {currentData.humidity}%
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Humedad
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={currentData.humidity} 
-                      sx={{ mt: 2 }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid2>
+                {/* Temperatura Aparente */}
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <IndicatorUI 
+                    title="Temperatura Aparente" 
+                    description={weatherDataAPI.current.apparent_temperature.toFixed(1)}
+                    unit={weatherDataAPI.current_units.apparent_temperature}
+                  />
+                </Grid2>
 
-              {/* Viento */}
-              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{ bgcolor: '#fff', borderRadius: 2 }}>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontSize: 24, color: '#1abc9c', mb: 1 }}>💨</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                      {currentData.wind} km/h
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Velocidad del Viento
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={(currentData.wind / 20) * 100} 
-                      sx={{ mt: 2 }}
-                      color="success"
-                    />
-                  </CardContent>
-                </Card>
-              </Grid2>
+                {/* Velocidad del Viento */}
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <IndicatorUI 
+                    title="Velocidad del Viento" 
+                    description={weatherDataAPI.current.wind_speed_10m.toFixed(1)}
+                    unit={weatherDataAPI.current_units.wind_speed_10m}
+                  />
+                </Grid2>
 
-              {/* Condición */}
-              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{ bgcolor: '#fff', borderRadius: 2 }}>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontSize: 24, color: '#9b59b6', mb: 1 }}>☁️</Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                      {currentData.condition}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Condición Actual
-                    </Typography>
-                  </CardContent>
-                </Card>
+                {/* Humedad Relativa */}
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <IndicatorUI 
+                    title="Humedad Relativa" 
+                    description={weatherDataAPI.current.relative_humidity_2m.toString()}
+                    unit={weatherDataAPI.current_units.relative_humidity_2m}
+                  />
+                </Grid2>
               </Grid2>
-            </Grid2>
+            )}
           </Paper>
         </Grid2>
 
