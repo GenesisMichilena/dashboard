@@ -21,6 +21,8 @@ import { HeaderUI } from './components/HeaderUI';
 import { AlertUI } from './components/AlertUI';
 import SelectorUI from './components/SelectorUI';
 import IndicatorUI from './components/IndicatorUI';
+import TableUI from './components/TableUI';
+import ChartUI from './components/ChartUI';
 import useFetchData from './hooks/useFetchData';
 
 function App() {
@@ -121,11 +123,13 @@ function App() {
               Indicadores Climáticos en Tiempo Real
             </Typography>
             
-            {/* Mostrar loading o datos */}
             {!weatherDataAPI ? (
-              <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
-                Cargando datos del clima...
-              </Typography>
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <LinearProgress sx={{ mb: 2, width: '60%', mx: 'auto' }} />
+                <Typography variant="body1" color="text.secondary">
+                  Cargando datos del clima desde Open-Meteo API...
+                </Typography>
+              </Box>
             ) : (
               <Grid2 container spacing={3}>
                 {/* Temperatura (2m) */}
@@ -168,66 +172,43 @@ function App() {
           </Paper>
         </Grid2>
 
-        {/* Gráfico de Temperatura (Solo MD) */}
+        {/* Gráfico y Tabla desde MUI-X (Solo MD) */}
         <Grid2 
           size={{ xs: 12, md: 6 }}
           sx={{ display: { xs: "none", md: "block" } }}
         >
-          <Paper elevation={3} sx={{ 
-            p: 3, 
-            height: '250px',
-            borderRadius: 2,
-            bgcolor: '#fff'
-          }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2c3e50' }}>
-              Temperatura por Horas
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 'calc(100% - 40px)' }}>
-              {[24, 28, 32, 30, 26, 24].map((temp, index) => (
-                <Box key={index} sx={{ flex: 1, textAlign: 'center', mx: 1 }}>
-                  <Box sx={{ 
-                    height: `${temp * 3}px`, 
-                    bgcolor: '#ff7e5f',
-                    borderRadius: '4px 4px 0 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
-                    {temp}°
-                  </Box>
-                  <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                    {['6h', '9h', '12h', '15h', '18h', '21h'][index]}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
+          <ChartUI weatherData={weatherDataAPI} />
         </Grid2>
 
-        {/* Tabla de Datos (Solo MD) */}
         <Grid2 
           size={{ xs: 12, md: 6 }}
           sx={{ display: { xs: "none", md: "block" } }}
         >
+          <TableUI weatherData={weatherDataAPI} />
+        </Grid2>
+
+        {/* Tabla de Datos de Ciudades (Solo MD) */}
+        <Grid2 
+          size={{ xs: 12, md: 12 }}
+          sx={{ display: { xs: "none", md: "block" } }}
+        >
           <Paper elevation={3} sx={{ 
             p: 3, 
-            height: '250px',
             borderRadius: 2,
             bgcolor: '#fff'
           }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#2c3e50' }}>
-              Datos por Ciudad
+              Datos por Ciudad (Ecuador)
             </Typography>
-            <TableContainer sx={{ maxHeight: 200 }}>
+            <TableContainer>
               <Table size="small">
                 <TableHead>
-                  <TableRow>
+                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                     <TableCell sx={{ fontWeight: 'bold' }}>Ciudad</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }} align="right">Temp (°C)</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }} align="right">Humedad (%)</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }} align="right">Viento (km/h)</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} align="center">Condición</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -239,10 +220,27 @@ function App() {
                       onClick={() => setSelectedCity(city)}
                       sx={{ cursor: 'pointer' }}
                     >
-                      <TableCell sx={{ textTransform: 'capitalize' }}>{city}</TableCell>
-                      <TableCell align="right">{data.temp}</TableCell>
-                      <TableCell align="right">{data.humidity}</TableCell>
-                      <TableCell align="right">{data.wind}</TableCell>
+                      <TableCell sx={{ textTransform: 'capitalize', fontWeight: 'medium' }}>
+                        {city}
+                      </TableCell>
+                      <TableCell align="right">{data.temp}°C</TableCell>
+                      <TableCell align="right">{data.humidity}%</TableCell>
+                      <TableCell align="right">{data.wind} km/h</TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ 
+                          display: 'inline-block', 
+                          px: 1.5, 
+                          py: 0.5, 
+                          borderRadius: 1,
+                          bgcolor: city === 'guayaquil' ? '#e3f2fd' : 
+                                  city === 'quito' ? '#f3e5f5' : 
+                                  city === 'manta' ? '#e8f5e9' : '#fff3e0',
+                          color: '#333',
+                          fontSize: '0.875rem'
+                        }}>
+                          {data.condition}
+                        </Box>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -265,17 +263,20 @@ function App() {
             <Grid2 container spacing={2}>
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="body2">
-                  <strong>Pronóstico:</strong> Estable para las próximas 48 horas
+                  <strong>Última actualización:</strong> {weatherDataAPI ? 
+                    new Date(weatherDataAPI.current.time).toLocaleString('es-EC') : 
+                    'Cargando...'}
                 </Typography>
               </Grid2>
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="body2">
-                  <strong>Índice UV:</strong> Moderado (5.2)
+                  <strong>Fuente de datos:</strong> Open-Meteo API
                 </Typography>
               </Grid2>
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="body2">
-                  <strong>Calidad del Aire:</strong> Buena
+                  <strong>Ubicación:</strong> Lat: {weatherDataAPI?.latitude?.toFixed(4) || '-'}°, 
+                  Long: {weatherDataAPI?.longitude?.toFixed(4) || '-'}°
                 </Typography>
               </Grid2>
             </Grid2>
